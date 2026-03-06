@@ -5,10 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { cn, getInitials } from '@/lib/utils'
-import { LogOut, Bell } from 'lucide-react'
+import { LogOut, Bell, LayoutGrid } from 'lucide-react'
 import type { UserRole } from '@/lib/supabase/types'
 
 interface NavItem {
@@ -40,6 +38,20 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
   ],
 }
 
+const ROLE_LABEL: Record<UserRole, string> = {
+  coach: 'Coach',
+  cm: 'Cluster Manager',
+  admin: 'Administrator',
+  observer: 'Observer',
+}
+
+const ROLE_COLOR: Record<UserRole, string> = {
+  coach: 'bg-blue-500',
+  cm: 'bg-emerald-500',
+  admin: 'bg-violet-500',
+  observer: 'bg-amber-500',
+}
+
 interface TopNavProps {
   role: UserRole
   userName: string
@@ -63,38 +75,40 @@ export function TopNav({ role, userName, escalationCount = 0 }: TopNavProps) {
     return pathname.startsWith(item.href)
   }
 
-  const roleLabel: Record<UserRole, string> = {
-    coach: 'Coach',
-    cm: 'Cluster Manager',
-    admin: 'Admin',
-    observer: 'Observer',
-  }
-
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="flex h-14 items-center px-4 gap-4">
-        {/* Logo / Brand */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
+    <header className="sticky top-0 z-40 w-full" style={{ background: 'hsl(222 47% 11%)' }}>
+      <div className="flex h-14 items-center px-4 gap-3">
+
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <div className={cn(
+            'w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs shrink-0',
+            ROLE_COLOR[role]
+          )}>
             D
           </div>
-          <span className="font-semibold text-sm hidden sm:block">DTSP</span>
+          <div className="hidden sm:flex flex-col leading-none">
+            <span className="font-semibold text-sm text-white">DTSP</span>
+            <span className="text-[10px] mt-0.5" style={{ color: 'hsl(218 20% 55%)' }}>Coach Platform</span>
+          </div>
         </Link>
 
-        <Separator orientation="vertical" className="h-5" />
+        {/* Divider */}
+        <div className="w-px h-5 shrink-0" style={{ background: 'hsl(222 30% 22%)' }} />
 
-        {/* Nav items */}
-        <nav className="flex items-center gap-1 flex-1">
+        {/* Nav */}
+        <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
                 isActive(item)
-                  ? 'bg-secondary text-secondary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                  ? 'text-white bg-white/10'
+                  : 'hover:text-white hover:bg-white/5'
               )}
+              style={isActive(item) ? {} : { color: 'hsl(218 20% 60%)' }}
             >
               {item.label}
             </Link>
@@ -102,33 +116,47 @@ export function TopNav({ role, userName, escalationCount = 0 }: TopNavProps) {
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Escalation badge for CM */}
+        <div className="flex items-center gap-1.5 shrink-0">
+
+          {/* Escalation bell — CM only */}
           {role === 'cm' && escalationCount > 0 && (
-            <Button variant="ghost" size="icon" className="relative" asChild>
-              <Link href="/cm/coaches">
-                <Bell className="h-4 w-4" />
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
-                  {escalationCount > 9 ? '9+' : escalationCount}
-                </span>
-              </Link>
-            </Button>
+            <Link
+              href="/cm/coaches"
+              className="relative p-2 rounded-md transition-colors hover:bg-white/10"
+              style={{ color: 'hsl(218 20% 60%)' }}
+              title={`${escalationCount} open escalations`}
+            >
+              <Bell className="h-4 w-4" />
+              <span className="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                {escalationCount > 9 ? '9+' : escalationCount}
+              </span>
+            </Link>
           )}
 
-          {/* User avatar + role */}
-          <div className="flex items-center gap-2">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="text-xs">{getInitials(userName)}</AvatarFallback>
+          {/* User */}
+          <div className="flex items-center gap-2 pl-1">
+            <Avatar className="h-7 w-7 ring-1 ring-white/20">
+              <AvatarFallback className={cn('text-[11px] font-semibold text-white', ROLE_COLOR[role])}>
+                {getInitials(userName)}
+              </AvatarFallback>
             </Avatar>
-            <div className="hidden sm:flex flex-col">
-              <span className="text-xs font-medium leading-none">{userName}</span>
-              <span className="text-[10px] text-muted-foreground leading-none mt-0.5">{roleLabel[role]}</span>
+            <div className="hidden sm:flex flex-col leading-none">
+              <span className="text-xs font-medium text-white">{userName}</span>
+              <span className="text-[10px] mt-0.5" style={{ color: 'hsl(218 20% 55%)' }}>
+                {ROLE_LABEL[role]}
+              </span>
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          {/* Sign out */}
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            className="ml-1 p-2 rounded-md transition-colors hover:bg-white/10"
+            style={{ color: 'hsl(218 20% 55%)' }}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
     </header>

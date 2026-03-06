@@ -5,7 +5,7 @@ import { LeadershipSnapshot } from './LeadershipSnapshot'
 export default async function SnapshotPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   const { data: profile } = await supabase
     .from('profiles')

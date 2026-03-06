@@ -5,7 +5,7 @@ import { RosterImport } from './RosterImport'
 export default async function RostersPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   const { data: cohorts } = await supabase
     .from('org_units')

@@ -2,11 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CoachHome } from './CoachHome'
 import { format } from 'date-fns'
+import { DEMO_COACH_SESSIONS, DEMO_DUE_ACTIONS } from '@/lib/demo-data'
 
 export default async function CoachPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
+
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && !user) {
+    return <CoachHome todaySessions={DEMO_COACH_SESSIONS as any} dueActions={DEMO_DUE_ACTIONS} />
+  }
 
   const today = format(new Date(), 'yyyy-MM-dd')
 

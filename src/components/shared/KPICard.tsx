@@ -11,15 +11,15 @@ interface KPICardProps {
 
 export function KPICard({ label, value, subtext, trend, className }: KPICardProps) {
   return (
-    <Card className={cn('', className)}>
-      <CardContent className="pt-4 pb-4">
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
+    <Card className={cn('border-l-[3px] border-l-primary/50', className)}>
+      <CardContent className="pt-5 pb-5 px-5">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="text-3xl font-bold mt-1.5 tabular-nums tracking-tight">{value}</p>
         {subtext && (
           <p className={cn(
-            'text-xs mt-0.5',
-            trend === 'up' ? 'text-green-600' :
-            trend === 'down' ? 'text-red-600' :
+            'text-xs mt-1 font-medium',
+            trend === 'up' ? 'text-emerald-600' :
+            trend === 'down' ? 'text-red-500' :
             'text-muted-foreground'
           )}>
             {subtext}

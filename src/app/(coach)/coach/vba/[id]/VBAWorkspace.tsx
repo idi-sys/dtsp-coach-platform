@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronRight, CheckCircle2, XCircle, Video } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 
 interface VBAChecklistItem {
@@ -32,6 +32,7 @@ interface VBAWorkspaceProps {
     teacher: { id: string; name: string; school_name: string; phone: string | null }
     scheduled_at: string
     status: string
+    meet_link?: string | null
   }
   studentResults: StudentResult[]
   vbaChecklist: VBAChecklistItem[]
@@ -53,7 +54,7 @@ const NUMERACY_ITEMS = [
 ]
 
 // Default student count — up to 26
-const DEFAULT_STUDENT_COUNT = 20
+const DEFAULT_STUDENT_COUNT = 10
 
 export function VBAWorkspace({ vbaSession, studentResults, vbaChecklist }: VBAWorkspaceProps) {
   const router = useRouter()
@@ -136,15 +137,24 @@ export function VBAWorkspace({ vbaSession, studentResults, vbaChecklist }: VBAWo
       </Button>
 
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-xl font-bold">VBA — {vbaSession.teacher.name}</h1>
-          <Badge className="bg-blue-100 text-blue-700">Classroom visit</Badge>
+          <Badge className="bg-blue-50 text-blue-700 border-blue-200">Video-Based Assessment</Badge>
+          {vbaSession.meet_link && (
+            <Button
+              size="sm"
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white ml-auto"
+              onClick={() => window.open(vbaSession.meet_link!, 'dtsp-vba', 'width=1200,height=800')}
+            >
+              <Video className="h-4 w-4" /> Join Meet
+            </Button>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">
           {vbaSession.teacher.school_name} · {formatDateTime(vbaSession.scheduled_at)}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          {completedStudents}/{studentCount} students assessed · Tap student to expand
+          Coach shows items to student via Meet · Teacher holds phone · {completedStudents}/{studentCount} students assessed
         </p>
       </div>
 

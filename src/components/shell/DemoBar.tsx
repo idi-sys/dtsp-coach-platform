@@ -1,38 +1,61 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
 import type { UserRole } from '@/lib/supabase/types'
 
-const ROLE_LABEL: Record<UserRole, string> = {
-  coach: 'Coach',
-  cm: 'Cluster Manager',
-  admin: 'Admin',
-  observer: 'Observer',
-}
-
-const ROLE_COLOR: Record<UserRole, string> = {
-  coach: 'bg-blue-600',
-  cm: 'bg-emerald-600',
-  admin: 'bg-violet-600',
-  observer: 'bg-amber-600',
-}
+const ROLES: { role: UserRole; label: string; accent: string }[] = [
+  { role: 'coach',    label: 'Coach',    accent: 'bg-blue-500' },
+  { role: 'cm',       label: 'CM',       accent: 'bg-emerald-500' },
+  { role: 'admin',    label: 'Admin',    accent: 'bg-violet-500' },
+  { role: 'observer', label: 'Observer', accent: 'bg-amber-500' },
+]
 
 export function DemoBar({ role }: { role: UserRole }) {
+  const [switching, setSwitching] = useState<UserRole | null>(null)
+
+  async function switchRole(next: UserRole) {
+    if (next === role || switching) return
+    setSwitching(next)
+    window.location.href = `/${next}`
+  }
+
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between px-4 py-2 bg-gray-900 text-white text-xs">
+    <div
+      className="fixed bottom-0 inset-x-0 z-50 flex items-center justify-between px-5 py-2.5"
+      style={{ background: 'hsl(222 47% 8%)', borderTop: '1px solid hsl(222 30% 18%)' }}
+    >
       <div className="flex items-center gap-2">
-        <span className="text-gray-400">Demo mode</span>
-        <span className="text-gray-600">·</span>
-        <span className={`px-2 py-0.5 rounded-full text-white font-medium text-[11px] ${ROLE_COLOR[role]}`}>
-          {ROLE_LABEL[role]}
+        <span
+          className="text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded"
+          style={{ color: 'hsl(38 90% 60%)', background: 'hsl(38 80% 15%)' }}
+        >
+          Demo
         </span>
+        <span className="text-xs" style={{ color: 'hsl(218 20% 45%)' }}>switch role:</span>
       </div>
-      <Link
-        href="/demo"
-        className="text-gray-300 hover:text-white transition-colors font-medium"
-      >
-        Switch role →
-      </Link>
+
+      <div className="flex items-center gap-1">
+        {ROLES.map(({ role: r, label, accent }) => {
+          const isActive = r === role
+          const isLoading = switching === r
+          return (
+            <button
+              key={r}
+              onClick={() => switchRole(r)}
+              disabled={switching !== null}
+              className={[
+                'px-3 py-1 rounded-full text-[11px] font-semibold transition-all',
+                isActive
+                  ? `${accent} text-white shadow-sm`
+                  : 'text-slate-400 hover:text-white hover:bg-white/8',
+                switching !== null && !isActive ? 'opacity-40 cursor-not-allowed' : '',
+              ].join(' ')}
+            >
+              {isLoading ? '…' : label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

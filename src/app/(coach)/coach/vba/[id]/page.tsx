@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { VBAWorkspace } from './VBAWorkspace'
+import { DEMO_VBA_SESSION, DEMO_VBA_RESULTS } from '@/lib/demo-data'
 
 export default async function VBAPage({
   params,
@@ -10,7 +11,18 @@ export default async function VBAPage({
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
+
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && !user) {
+    if (id !== 'demo-vba-1') notFound()
+    return (
+      <VBAWorkspace
+        vbaSession={DEMO_VBA_SESSION as any}
+        studentResults={DEMO_VBA_RESULTS as any}
+        vbaChecklist={[]}
+      />
+    )
+  }
 
   const { data: vbaSession, error } = await supabase
     .from('vba_sessions')

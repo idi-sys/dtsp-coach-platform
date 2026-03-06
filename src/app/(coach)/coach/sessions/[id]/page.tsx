@@ -10,7 +10,7 @@ export default async function SessionPage({
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   // Fetch session with teacher and notes
   const { data: session, error } = await supabase

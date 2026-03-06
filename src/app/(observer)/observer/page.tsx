@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 export default async function ObserverPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   // For alpha, observer sees the same leadership snapshot view as CM
   // In a future build, scope this to org_units the observer is assigned to

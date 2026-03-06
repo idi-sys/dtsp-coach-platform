@@ -10,7 +10,7 @@ export default async function AfterCallPage({
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   const { data: session, error } = await supabase
     .from('sessions')

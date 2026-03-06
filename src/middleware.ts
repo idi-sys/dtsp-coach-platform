@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { UserRole } from '@/lib/supabase/types'
 
-const PUBLIC_ROUTES = ['/login', '/auth/callback', '/demo']
+const PUBLIC_ROUTES = ['/login', '/auth/callback', '/demo', '/api/auth/setup']
 const ROLE_HOME: Record<UserRole, string> = {
   coach: '/coach',
   cm: '/cm',
@@ -11,6 +11,11 @@ const ROLE_HOME: Record<UserRole, string> = {
 }
 
 export async function middleware(request: NextRequest) {
+  // Demo mode: bypass all auth checks
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

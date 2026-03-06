@@ -5,7 +5,7 @@ import { AssignmentsPage } from './AssignmentsPage'
 export default async function Assignments() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') redirect('/login')
 
   const [coaches, teachers] = await Promise.all([
     supabase

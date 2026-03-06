@@ -37,6 +37,11 @@ export async function WorkspaceShell({ role, children }: WorkspaceShellProps) {
 
   const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
+  if (isDemo && !user) {
+    userName = 'IDI-DTSP'
+    if (role === 'cm') escalationCount = 2
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopNav role={role} userName={userName} escalationCount={escalationCount} />

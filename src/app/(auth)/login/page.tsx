@@ -8,20 +8,41 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-type Step = 'email' | 'otp'
+type Mode = 'password' | 'otp-email' | 'otp-verify'
+
+const ROLE_HOME: Record<string, string> = {
+  coach: '/coach', cm: '/cm', admin: '/admin', observer: '/observer',
+}
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? '/'
 
-  const [step, setStep] = useState<Step>('email')
+  const [mode, setMode] = useState<Mode>('password')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  async function handlePasswordLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    window.location.href = next === '/' ? '/' : next
+  }
 
   async function handleSendOTP(e: React.FormEvent) {
     e.preventDefault()
@@ -42,7 +63,7 @@ export default function LoginPage() {
       return
     }
 
-    setStep('otp')
+    setMode('otp-verify')
   }
 
   async function handleVerifyOTP(e: React.FormEvent) {
@@ -64,64 +85,108 @@ export default function LoginPage() {
     }
 
     if (data.user) {
-      // Fetch role for redirect
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', data.user.id)
         .single() as any
 
-      const roleHome: Record<string, string> = {
-        coach: '/coach',
-        cm: '/cm',
-        admin: '/admin',
-        observer: '/observer',
-      }
-
-      router.push(profile ? (roleHome[profile.role] ?? '/') : next)
+      window.location.href = profile ? (ROLE_HOME[profile.role] ?? '/') : next
     }
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="space-y-1">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+    <Card className="w-full max-w-sm border-0 shadow-2xl" style={{ background: 'hsl(0 0% 100%)' }}>
+      <CardHeader className="space-y-1 pb-4">
+        <div className="flex items-center gap-2 mb-3 lg:hidden">
+          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-sm">
             D
           </div>
           <span className="font-semibold text-sm text-muted-foreground">DTSP Coach Platform</span>
         </div>
         <CardTitle className="text-xl">
-          {step === 'email' ? 'Sign in' : 'Enter OTP'}
+          {mode === 'otp-verify' ? 'Enter OTP' : 'Sign in'}
         </CardTitle>
         <CardDescription>
-          {step === 'email'
-            ? 'Enter your email address to receive a one-time passcode.'
-            : `We sent a 6-digit code to ${email}`}
+          {mode === 'password' && 'Sign in with your email and password.'}
+          {mode === 'otp-email' && 'Enter your email to receive a one-time passcode.'}
+          {mode === 'otp-verify' && `We sent a 6-digit code to ${email}`}
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        {step === 'email' ? (
-          <form onSubmit={handleSendOTP} className="space-y-4">
+      <CardContent className="space-y-4">
+        {mode === 'password' && (
+          <form onSubmit={handlePasswordLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="coach@dtsp.org"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                autoFocus
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing in…' : 'Sign in'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-sm"
+              onClick={() => { setMode('otp-email'); setError(null) }}
+            >
+              Use email OTP instead
+            </Button>
+          </form>
+        )}
+
+        {mode === 'otp-email' && (
+          <form onSubmit={handleSendOTP} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Sending…' : 'Send OTP'}
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full text-sm"
+              onClick={() => { setMode('password'); setError(null) }}
+            >
+              Use password instead
+            </Button>
           </form>
-        ) : (
+        )}
+
+        {mode === 'otp-verify' && (
           <form onSubmit={handleVerifyOTP} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="otp">One-time passcode</Label>
@@ -147,7 +212,7 @@ export default function LoginPage() {
               type="button"
               variant="ghost"
               className="w-full text-sm"
-              onClick={() => { setStep('email'); setError(null); setOtp('') }}
+              onClick={() => { setMode('otp-email'); setError(null); setOtp('') }}
             >
               Use different email
             </Button>
